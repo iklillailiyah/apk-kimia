@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator Massa Molar Pintar</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 560px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .title { font-size: 24px; font-weight: 700; color: #1a73e8; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .kmm-input {
+    flex: 1; font-size: 15px; padding: 0 14px; height: 44px;
+    border-radius: 10px; border: 1.5px solid #d0d7e2;
+    background: #f7f9fc; color: #222;
+    font-family: 'Courier New', monospace; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .kmm-input:focus { border-color: #1a73e8; box-shadow: 0 0 0 3px #1a73e830; }
+  .kmm-btn {
+    height: 44px; padding: 0 20px; border-radius: 10px;
+    border: none; background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform 0.12s, box-shadow 0.12s;
+    box-shadow: 0 4px 12px rgba(26,115,232,0.35); white-space: nowrap;
+  }
+  .kmm-btn:hover { box-shadow: 0 6px 18px rgba(26,115,232,0.45); }
+  .kmm-btn:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(26,115,232,0.3); }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
+  .chip {
+    font-size: 12px; padding: 5px 12px; border-radius: 20px;
+    border: 1.5px solid #d0d7e2; background: #f7f9fc;
+    color: #555; cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .chip:hover { border-color: #1a73e8; color: #1a73e8; background: #e8f0fe; }
+  .result-box {
+    border-radius: 12px; padding: 1.1rem 1.25rem;
+    background: #f0f4ff; min-height: 70px;
+    display: flex; flex-direction: column; justify-content: center;
+    border: 1.5px solid #d0dbf5;
+  }
+  .result-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+  .result-value { font-size: 20px; font-weight: 700; color: #1a73e8; }
+  .result-empty { font-size: 15px; font-weight: 400; color: #bbb; }
+  .result-error { font-size: 14px; font-weight: 500; color: #d32f2f; }
+  .breakdown { margin-top: 1rem; display: none; }
+  .breakdown.show { display: block; }
+  .breakdown-title { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .brow {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: #555; padding: 4px 0;
+    border-bottom: 1px dashed #e8ecf5;
+  }
+  .brow:last-child { border-bottom: none; }
+  .brow span:last-child { font-family: 'Courier New', monospace; color: #333; }
+  .brow.total { font-weight: 700; color: #1a73e8; font-size: 14px; border-top: 1.5px solid #d0dbf5; margin-top: 4px; padding-top: 8px; }
+  .brow.total span:last-child { color: #1a73e8; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <p class="title">⚗️ Kalkulator Massa Molar Pintar</p>
+  <p class="subtitle">Masukkan rumus kimia untuk menghitung massa molar — untuk siswa SMA</p>
+
+  <div class="input-row">
+    <input class="kmm-input" id="kmm-inp" type="text"
+      placeholder="Ketik rumus, misal: H2SO4 atau NaCl"
+      autocomplete="off" spellcheck="false" />
+    <button class="kmm-btn" id="kmm-calc">Hitung Massa Molar</button>
+  </div>
+
+  <div class="examples">
+    <span class="chip" data-f="H2O">H₂O</span>
+    <span class="chip" data-f="NaCl">NaCl</span>
+    <span class="chip" data-f="H2SO4">H₂SO₄</span>
+    <span class="chip" data-f="C6H12O6">C₆H₁₂O₆</span>
+    <span class="chip" data-f="CaCO3">CaCO₃</span>
+    <span class="chip" data-f="Fe2O3">Fe₂O₃</span>
+    <span class="chip" data-f="Al2(SO4)3">Al₂(SO₄)₃</span>
+    <span class="chip" data-f="KMnO4">KMnO₄</span>
+    <span class="chip" data-f="Cu2SO4">Cu₂SO₄</span>
+  </div>
+
+  <div class="result-box" id="result-box">
+    <div class="result-label">Hasil</div>
+    <div class="result-empty" id="result-val">Masukkan rumus kimia lalu tekan Hitung</div>
+  </div>
+
+  <div class="breakdown" id="breakdown"></div>
+</div>
+
+<script>
+const atomicMass = {
+  H:1.008, He:4.003, Li:6.941, Be:9.012, B:10.811,
+  C:12.011, N:14.007, O:15.999, F:18.998, Ne:20.180,
+  Na:22.990, Mg:24.305, Al:26.982, Si:28.086, P:30.974,
+  S:32.065, Cl:35.453, Ar:39.948, K:39.098, Ca:40.078,
+  Fe:55.845, Cu:63.546, Ag:107.868, Br:79.904, I:126.904,
+  Ba:137.327, Zn:65.38, Mn:54.938, Cr:51.996, Co:58.933,
+  Ni:58.693, Pb:207.2, Hg:200.59, Au:196.967, Sn:118.71,
+  Ti:47.867, Mg:24.305
+};
+
+function parseFormula(formula) {
+  function parseGroup(str, idx) {
+    let counts = {};
+    while (idx < str.length) {
+      if (str[idx] === ')') { idx++; break; }
+      if (str[idx] === '(') {
+        idx++;
+        let result = parseGroup(str, idx);
+        let sub = result[0]; idx = result[1];
+        let num = '';
+        while (idx < str.length && /\d/.test(str[idx])) num += str[idx++];
+        let mult = num ? parseInt(num) : 1;
+        for (let el in sub) counts[el] = (counts[el] || 0) + sub[el] * mult;
+      } else if (/[A-Z]/.test(str[idx])) {
+        let el = str[idx++];
+        while (idx < str.length && /[a-z]/.test(str[idx])) el += str[idx++];
+        let num = '';
+        while (idx < str.length && /\d/.test(str[idx])) num += str[idx++];
+        let count = num ? parseInt(num) : 1;
+        counts[el] = (counts[el] || 0) + count;
+      } else {
+        return [null, idx];
+      }
+    }
+    return [counts, idx];
+  }
+  const result = parseGroup(formula, 0);
+  const counts = result[0];
+  const finalIdx = result[1];
+  if (!counts || finalIdx !== formula.length) return null;
+  return counts;
+}
+
+function calculate() {
+  const raw = document.getElementById('kmm-inp').value.trim();
+  const valEl = document.getElementById('result-val');
+  const bdEl = document.getElementById('breakdown');
+
+  valEl.className = '';
+
+  if (!raw) {
+    valEl.className = 'result-empty';
+    valEl.textContent = 'Masukkan rumus kimia lalu tekan Hitung';
+    bdEl.classList.remove('show');
+    bdEl.innerHTML = '';
+    return;
+  }
+
+  const counts = parseFormula(raw);
+  if (!counts) {
+    valEl.className = 'result-error';
+    valEl.textContent = 'Rumus tidak valid. Periksa penulisan (contoh: H2SO4, NaCl, Al2(SO4)3).';
+    bdEl.classList.remove('show');
+    return;
+  }
+
+  let total = 0;
+  let unknown = [];
+  let rows = '';
+
+  for (let el in counts) {
+    if (!atomicMass[el]) { unknown.push(el); continue; }
+    const contrib = atomicMass[el] * counts[el];
+    total += contrib;
+    rows += `<div class="brow">
+      <span>${el} &times; ${counts[el]}</span>
+      <span>${atomicMass[el].toFixed(3)} &times; ${counts[el]} = ${contrib.toFixed(3)} g/mol</span>
+    </div>`;
+  }
+
+  if (unknown.length) {
+    valEl.className = 'result-error';
+    valEl.textContent = `Unsur tidak dikenal dalam kamus: ${unknown.join(', ')}`;
+    bdEl.classList.remove('show');
+    return;
+  }
+
+  valEl.className = 'result-value';
+  valEl.textContent = `Massa Molar ${raw} adalah ${total.toFixed(3)} g/mol`;
+
+  bdEl.innerHTML = `
+    <div class="breakdown-title">Rincian Perhitungan</div>
+    ${rows}
+    <div class="brow total">
+      <span>Total Massa Molar</span>
+      <span>${total.toFixed(3)} g/mol</span>
+    </div>`;
+  bdEl.classList.add('show');
+}
+
+document.getElementById('kmm-calc').addEventListener('click', calculate);
+document.getElementById('kmm-inp').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') calculate();
+});
+document.querySelectorAll('.chip').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    document.getElementById('kmm-inp').value = chip.dataset.f;
+    calculate();
+  });
+});
+</script>
+
+</body>
+</html>
